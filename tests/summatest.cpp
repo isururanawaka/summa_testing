@@ -82,9 +82,9 @@ int main(int argc, char* argv[])
 
     // Read labelled triple files
     t0 = MPI_Wtime();
-    M.ParallelReadMM(Aname, maximum<double>());
+    M.ParallelReadMM(Aname,true, maximum<double>());
     fprintf(stderr, "first file read completed");
-    MB.ParallelReadMM(Bname, maximum<double>());
+    MB.ParallelReadMM(Bname,true, maximum<double>());
     fprintf(stderr, "second file read completed");
     t1 = MPI_Wtime();
     if(myrank == 0) fprintf(stderr, "Time taken to read file: %lf\n", t1-t0);
