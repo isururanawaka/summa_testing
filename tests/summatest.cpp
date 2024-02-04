@@ -51,6 +51,7 @@ int main(int argc, char* argv[])
   else {
     double vm_usage, resident_set;
     string Aname(argv[1]);
+    string Bname(argv[2]);
     if(myrank == 0){
       fprintf(stderr, "Data: %s\n", argv[1]);
     }
@@ -60,6 +61,7 @@ int main(int argc, char* argv[])
     double t0, t1;
 
     SpParMat<int64_t, double, SpDCCols < int64_t, double >> M(fullWorld);
+    SpParMat<int64_t, double, SpDCCols < int64_t, double >> MB(fullWorld);
 
     //// Read matrix market files
     //t0 = MPI_Wtime();
@@ -80,6 +82,7 @@ int main(int argc, char* argv[])
     // Read labelled triple files
     t0 = MPI_Wtime();
     M.ReadGeneralizedTuples(Aname, maximum<double>());
+    MB.ReadGeneralizedTuples(Bname, maximum<double>());
     t1 = MPI_Wtime();
     if(myrank == 0) fprintf(stderr, "Time taken to read file: %lf\n", t1-t0);
 
@@ -87,36 +90,37 @@ int main(int argc, char* argv[])
 
     // Run 2D multiplication to compare against
     SpParMat<int64_t, double, SpDCCols < int64_t, double >> A2D(M);
-    SpParMat<int64_t, double, SpDCCols < int64_t, double >> B2D(M);
+    SpParMat<int64_t, double, SpDCCols < int64_t, double >> B2D(MB);
     SpParMat<int64_t, double, SpDCCols < int64_t, double >> C2D =
         Mult_AnXBn_Synch<PTFF, double, SpDCCols<int64_t, double>, int64_t, double, double, SpDCCols<int64_t, double>, SpDCCols<int64_t, double> >
         (A2D, B2D);
-
+    t2 = MPI_Wtime();
+    if(myrank == 0) fprintf(stderr, "Time taken to multiply file: %lf\n", t2-t1);
     if(myrank == 0) fprintf(stderr, "2D Multiplication done \n");
 
-    // Increase number of layers 1 -> 4 -> 16
-    for(int layers = 1; layers <= 16; layers = layers * 4){
-      // Create two copies of input matrix which would be used in multiplication
-      SpParMat<int64_t, double, SpDCCols < int64_t, double >> A2(M);
-      SpParMat<int64_t, double, SpDCCols < int64_t, double >> B2(M);
-
-      // Convert 2D matrices to 3D
-      SpParMat3D<int64_t, double, SpDCCols < int64_t, double >> A3D(A2, layers, true, false);
-      SpParMat3D<int64_t, double, SpDCCols < int64_t, double >> B3D(B2, layers, false, false);
-      if(myrank == 0) fprintf(stderr, "Running 3D with %d layers\n", layers);
-
-      SpParMat3D<int64_t, double, SpDCCols < int64_t, double >> C3D =
-          Mult_AnXBn_SUMMA3D<PTFF, double, SpDCCols<int64_t, double>, int64_t, double, double, SpDCCols<int64_t, double>, SpDCCols<int64_t, double> >
-          (A3D, B3D);
-
-      SpParMat<int64_t, double, SpDCCols < int64_t, double >> C3D2D = C3D.Convert2D();
-      if(C2D == C3D2D){
-        if(myrank == 0) fprintf(stderr, "Correct!\n");
-      }
-      else{
-        if(myrank == 0) fprintf(stderr, "Not correct!\n");
-      }
-    }
+//    // Increase number of layers 1 -> 4 -> 16
+//    for(int layers = 1; layers <= 16; layers = layers * 4){
+//      // Create two copies of input matrix which would be used in multiplication
+//      SpParMat<int64_t, double, SpDCCols < int64_t, double >> A2(M);
+//      SpParMat<int64_t, double, SpDCCols < int64_t, double >> B2(M);
+//
+//      // Convert 2D matrices to 3D
+//      SpParMat3D<int64_t, double, SpDCCols < int64_t, double >> A3D(A2, layers, true, false);
+//      SpParMat3D<int64_t, double, SpDCCols < int64_t, double >> B3D(B2, layers, false, false);
+//      if(myrank == 0) fprintf(stderr, "Running 3D with %d layers\n", layers);
+//
+//      SpParMat3D<int64_t, double, SpDCCols < int64_t, double >> C3D =
+//          Mult_AnXBn_SUMMA3D<PTFF, double, SpDCCols<int64_t, double>, int64_t, double, double, SpDCCols<int64_t, double>, SpDCCols<int64_t, double> >
+//          (A3D, B3D);
+//
+//      SpParMat<int64_t, double, SpDCCols < int64_t, double >> C3D2D = C3D.Convert2D();
+//      if(C2D == C3D2D){
+//        if(myrank == 0) fprintf(stderr, "Correct!\n");
+//      }
+//      else{
+//        if(myrank == 0) fprintf(stderr, "Not correct!\n");
+//      }
+//    }
 
   }
   MPI_Finalize();
