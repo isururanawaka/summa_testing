@@ -54,6 +54,7 @@ int main(int argc, char* argv[])
     string Bname(argv[2]);
     if(myrank == 0){
       fprintf(stderr, "Data: %s\n", argv[1]);
+      fprintf(stderr, "Data: %s\n", argv[2]);
     }
     shared_ptr<CommGrid> fullWorld;
     fullWorld.reset( new CommGrid(MPI_COMM_WORLD, 0, 0) );
@@ -82,7 +83,9 @@ int main(int argc, char* argv[])
     // Read labelled triple files
     t0 = MPI_Wtime();
     M.ReadGeneralizedTuples(Aname, maximum<double>());
+    fprintf(stderr, "first file read completed");
     MB.ReadGeneralizedTuples(Bname, maximum<double>());
+    fprintf(stderr, "second file read completed");
     t1 = MPI_Wtime();
     if(myrank == 0) fprintf(stderr, "Time taken to read file: %lf\n", t1-t0);
 
