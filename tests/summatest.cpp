@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
     shared_ptr<CommGrid> fullWorld;
     fullWorld.reset( new CommGrid(MPI_COMM_WORLD, 0, 0) );
 
-    double t0, t1;
+    double t0, t1, t2;
 
     SpParMat<int64_t, double, SpDCCols < int64_t, double >> M(fullWorld);
     SpParMat<int64_t, double, SpDCCols < int64_t, double >> MB(fullWorld);
